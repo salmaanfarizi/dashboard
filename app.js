@@ -5,7 +5,6 @@ let dashboardData = null;
 let charts = {};
 let currentMonth = null;
 let settings = {
-  apiUrl: '',
   currency: 'SAR',
   darkMode: false
 };
@@ -79,28 +78,12 @@ function toggleDarkMode() {
 function loadDashboardData() {
   showLoading(true);
 
-  // Check if API URL is configured
-  if (settings.apiUrl) {
-    // Fetch from Google Apps Script Web App
-    fetch(settings.apiUrl)
-      .then(response => response.json())
-      .then(data => {
-        dashboardData = data;
-        currentMonth = data.latestMonth;
-        populateMonthSelector(data.months);
-        updateDashboard(data);
-        showLoading(false);
-        showToast('success', 'Data Loaded', 'Connected to Google Sheets');
-      })
-      .catch(error => {
-        console.error('API Error:', error);
-        showToast('warning', 'Using Demo Data', 'Could not connect to API');
-        loadDemoData();
-      });
-  } else {
-    // Use demo data
-    loadDemoData();
-  }
+  // Note: Direct API calls from Netlify to Google Apps Script are blocked by CORS.
+  // The dashboard uses embedded demo data (your actual spreadsheet data).
+  // For live data, use the Google Apps Script version within Google Sheets.
+
+  // Always use demo data for Netlify deployment
+  loadDemoData();
 }
 
 function loadDemoData() {
