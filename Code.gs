@@ -1417,25 +1417,25 @@ function fixOutstandingSummary() {
 /* ==================== WEB APP FUNCTIONS ==================== */
 
 /**
- * Serves the web dashboard or JSON API
+ * Serves the web dashboard or JSON/JSONP API
  * URL Parameters:
  *   - action=getData: Returns JSON dashboard data
  *   - action=getMonth&month=MMM-YYYY: Returns JSON data for specific month
+ *   - callback=functionName: Wraps response in JSONP callback (bypasses CORS)
  *   - (no action): Returns HTML dashboard
  */
 function doGet(e) {
   const params = e ? e.parameter : {};
   const action = params.action;
+  const callback = params.callback; // JSONP callback
 
-  // JSON API endpoints
+  // JSON/JSONP API endpoints
   if (action === 'getData') {
     try {
       const data = getDashboardData();
-      return ContentService.createTextOutput(JSON.stringify(data))
-        .setMimeType(ContentService.MimeType.JSON);
+      return jsonResponse_(data, callback);
     } catch (error) {
-      return ContentService.createTextOutput(JSON.stringify({ error: error.message }))
-        .setMimeType(ContentService.MimeType.JSON);
+      return jsonResponse_({ error: error.message }, callback);
     }
   }
 
@@ -1443,11 +1443,9 @@ function doGet(e) {
     try {
       const monthYear = params.month || '';
       const data = getDashboardDataForMonth(monthYear);
-      return ContentService.createTextOutput(JSON.stringify(data))
-        .setMimeType(ContentService.MimeType.JSON);
+      return jsonResponse_(data, callback);
     } catch (error) {
-      return ContentService.createTextOutput(JSON.stringify({ error: error.message }))
-        .setMimeType(ContentService.MimeType.JSON);
+      return jsonResponse_({ error: error.message }, callback);
     }
   }
 
@@ -1457,6 +1455,23 @@ function doGet(e) {
     .setTitle('Financial Dashboard')
     .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL)
     .addMetaTag('viewport', 'width=device-width, initial-scale=1');
+}
+
+/**
+ * Returns JSON or JSONP response
+ */
+function jsonResponse_(data, callback) {
+  const jsonStr = JSON.stringify(data);
+
+  if (callback) {
+    // JSONP response - wraps JSON in callback function
+    return ContentService.createTextOutput(callback + '(' + jsonStr + ')')
+      .setMimeType(ContentService.MimeType.JAVASCRIPT);
+  }
+
+  // Standard JSON response
+  return ContentService.createTextOutput(jsonStr)
+    .setMimeType(ContentService.MimeType.JSON);
 }
 
 /**
