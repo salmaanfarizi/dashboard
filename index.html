@@ -581,11 +581,6 @@
       </div>
       <div class="modal-body">
         <div class="setting-group">
-          <label>Google Apps Script Web App URL (Optional)</label>
-          <input type="url" id="apiUrl" placeholder="https://script.google.com/macros/s/...">
-          <small>Connect to live Google Sheets data</small>
-        </div>
-        <div class="setting-group">
           <label>Currency</label>
           <select id="currency">
             <option value="SAR">SAR - Saudi Riyal</option>
@@ -598,6 +593,12 @@
             <input type="checkbox" id="darkMode" onchange="toggleDarkMode()">
             Dark Mode
           </label>
+        </div>
+        <div class="setting-group">
+          <small style="color: var(--text-muted);">
+            This dashboard displays your November 2025 financial data.<br>
+            For live data updates, use the dashboard within Google Sheets.
+          </small>
         </div>
       </div>
       <div class="modal-footer">
