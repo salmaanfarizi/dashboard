@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Financial Dashboard - Monthly Accounting System</title>
+
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="styles.css">
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📊</text></svg>">
+</head>
+<body>
+  <!-- Sidebar -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <div class="logo">
+        <div class="logo-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+            <path d="M2 17l10 5 10-5"/>
+            <path d="M2 12l10 5 10-5"/>
+          </svg>
+        </div>
+        <span class="logo-text">FinanceHub</span>
+      </div>
+      <button class="sidebar-toggle" onclick="toggleSidebar()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M15 18l-6-6 6-6"/>
+        </svg>
+      </button>
+    </div>
+
+    <nav class="sidebar-nav">
+      <a href="#" class="nav-item active" data-section="overview">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="3" width="7" height="7"/>
+          <rect x="14" y="3" width="7" height="7"/>
+          <rect x="14" y="14" width="7" height="7"/>
+          <rect x="3" y="14" width="7" height="7"/>
+        </svg>
+        <span>Overview</span>
+      </a>
+      <a href="#" class="nav-item" data-section="banks">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M3 21h18"/>
+          <path d="M3 10h18"/>
+          <path d="M5 6l7-3 7 3"/>
+          <path d="M4 10v11"/>
+          <path d="M20 10v11"/>
+          <path d="M8 14v3"/>
+          <path d="M12 14v3"/>
+          <path d="M16 14v3"/>
+        </svg>
+        <span>Banks</span>
+      </a>
+      <a href="#" class="nav-item" data-section="outstanding">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+          <circle cx="9" cy="7" r="4"/>
+          <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+          <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+        </svg>
+        <span>Outstanding</span>
+      </a>
+      <a href="#" class="nav-item" data-section="advances">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="12" y1="1" x2="12" y2="23"/>
+          <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+        </svg>
+        <span>Advances</span>
+      </a>
+      <a href="#" class="nav-item" data-section="suspense">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"/>
+          <line x1="12" y1="8" x2="12" y2="12"/>
+          <line x1="12" y1="16" x2="12.01" y2="16"/>
+        </svg>
+        <span>Suspense</span>
+      </a>
+      <a href="#" class="nav-item" data-section="reports">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+          <polyline points="14 2 14 8 20 8"/>
+          <line x1="16" y1="13" x2="8" y2="13"/>
+          <line x1="16" y1="17" x2="8" y2="17"/>
+          <polyline points="10 9 9 9 8 9"/>
+        </svg>
+        <span>Reports</span>
+      </a>
+    </nav>
+
+    <div class="sidebar-footer">
+      <a href="#" class="nav-item" onclick="showSettings()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="3"/>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+        </svg>
+        <span>Settings</span>
+      </a>
+    </div>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="main-content">
+    <!-- Header -->
+    <header class="header">
+      <div class="header-left">
+        <button class="menu-toggle" onclick="toggleSidebar()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="3" y1="12" x2="21" y2="12"/>
+            <line x1="3" y1="6" x2="21" y2="6"/>
+            <line x1="3" y1="18" x2="21" y2="18"/>
+          </svg>
+        </button>
+        <div class="header-title">
+          <h1>Financial Dashboard</h1>
+          <p class="header-subtitle">Monthly Accounting Report System</p>
+        </div>
+      </div>
+      <div class="header-right">
+        <div class="month-selector">
+          <label for="monthSelect">Period:</label>
+          <select id="monthSelect" onchange="changeMonth(this.value)">
+            <!-- Populated by JavaScript -->
+          </select>
+        </div>
+        <button class="btn btn-primary" onclick="refreshData()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="23 4 23 10 17 10"/>
+            <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+          </svg>
+          <span>Refresh</span>
+        </button>
+        <button class="btn btn-secondary" onclick="exportReport()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="7 10 12 15 17 10"/>
+            <line x1="12" y1="15" x2="12" y2="3"/>
+          </svg>
+          <span>Export</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Dashboard Content -->
+    <div class="dashboard-content">
+      <!-- Overview Section -->
+      <section id="overview-section" class="section active">
+        <!-- KPI Cards -->
+        <div class="kpi-grid">
+          <div class="kpi-card kpi-primary">
+            <div class="kpi-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M3 21h18"/>
+                <path d="M3 10h18"/>
+                <path d="M5 6l7-3 7 3"/>
+              </svg>
+            </div>
+            <div class="kpi-content">
+              <span class="kpi-label">Bank Balance</span>
+              <span class="kpi-value" id="kpi-bank-balance">--</span>
+              <span class="kpi-change positive" id="kpi-bank-change">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/>
+                </svg>
+                --
+              </span>
+            </div>
+          </div>
+
+          <div class="kpi-card kpi-danger">
+            <div class="kpi-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                <circle cx="9" cy="7" r="4"/>
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+              </svg>
+            </div>
+            <div class="kpi-content">
+              <span class="kpi-label">Total Outstanding</span>
+              <span class="kpi-value" id="kpi-outstanding">--</span>
+              <span class="kpi-change negative" id="kpi-outstanding-change">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="23 18 13.5 8.5 8.5 13.5 1 6"/>
+                </svg>
+                --
+              </span>
+            </div>
+          </div>
+
+          <div class="kpi-card kpi-success">
+            <div class="kpi-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="12" y1="1" x2="12" y2="23"/>
+                <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+              </svg>
+            </div>
+            <div class="kpi-content">
+              <span class="kpi-label">Advance Balance</span>
+              <span class="kpi-value" id="kpi-advances">--</span>
+              <span class="kpi-change" id="kpi-advances-change">--</span>
+            </div>
+          </div>
+
+          <div class="kpi-card kpi-warning">
+            <div class="kpi-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/>
+                <line x1="12" y1="8" x2="12" y2="12"/>
+                <line x1="12" y1="16" x2="12.01" y2="16"/>
+              </svg>
+            </div>
+            <div class="kpi-content">
+              <span class="kpi-label">Suspense Balance</span>
+              <span class="kpi-value" id="kpi-suspense">--</span>
+              <span class="kpi-change" id="kpi-suspense-change">--</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Charts Row -->
+        <div class="charts-grid">
+          <div class="chart-card large">
+            <div class="chart-header">
+              <h3>Cash Flow Trend</h3>
+              <div class="chart-actions">
+                <button class="chart-btn active" data-range="6">6M</button>
+                <button class="chart-btn" data-range="12">12M</button>
+                <button class="chart-btn" data-range="all">All</button>
+              </div>
+            </div>
+            <div class="chart-body">
+              <canvas id="cashFlowChart"></canvas>
+            </div>
+          </div>
+
+          <div class="chart-card">
+            <div class="chart-header">
+              <h3>Outstanding by Salesman</h3>
+            </div>
+            <div class="chart-body">
+              <canvas id="outstandingPieChart"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <!-- Data Tables -->
+        <div class="tables-grid">
+          <div class="table-card">
+            <div class="table-header">
+              <h3>Top Outstanding Accounts</h3>
+              <a href="#" class="view-all" onclick="showSection('outstanding')">View All</a>
+            </div>
+            <div class="table-body">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Salesman</th>
+                    <th>Outstanding</th>
+                    <th>Trend</th>
+                  </tr>
+                </thead>
+                <tbody id="top-outstanding-table">
+                  <!-- Populated by JavaScript -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="table-card">
+            <div class="table-header">
+              <h3>Bank Accounts Summary</h3>
+              <a href="#" class="view-all" onclick="showSection('banks')">View All</a>
+            </div>
+            <div class="table-body">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Bank</th>
+                    <th>Balance</th>
+                    <th>Change</th>
+                  </tr>
+                </thead>
+                <tbody id="bank-summary-table">
+                  <!-- Populated by JavaScript -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- YTD Summary -->
+        <div class="ytd-section">
+          <div class="ytd-card">
+            <h3>Year-to-Date Summary</h3>
+            <div class="ytd-grid">
+              <div class="ytd-item">
+                <span class="ytd-label">Total Received</span>
+                <span class="ytd-value positive" id="ytd-received">--</span>
+              </div>
+              <div class="ytd-item">
+                <span class="ytd-label">Total Payments</span>
+                <span class="ytd-value negative" id="ytd-payments">--</span>
+              </div>
+              <div class="ytd-item">
+                <span class="ytd-label">Net Cash Flow</span>
+                <span class="ytd-value" id="ytd-netflow">--</span>
+              </div>
+              <div class="ytd-item">
+                <span class="ytd-label">Months Tracked</span>
+                <span class="ytd-value" id="ytd-months">--</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Banks Section -->
+      <section id="banks-section" class="section">
+        <div class="section-header">
+          <h2>Banks Overview</h2>
+          <p>Monthly bank balances and transactions</p>
+        </div>
+
+        <div class="chart-card full-width">
+          <div class="chart-header">
+            <h3>Bank Balance Trend</h3>
+          </div>
+          <div class="chart-body">
+            <canvas id="bankTrendChart"></canvas>
+          </div>
+        </div>
+
+        <div class="table-card full-width">
+          <div class="table-header">
+            <h3>Banks Comparison</h3>
+          </div>
+          <div class="table-body scrollable">
+            <table class="data-table" id="banks-comparison-table">
+              <!-- Populated by JavaScript -->
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- Outstanding Section -->
+      <section id="outstanding-section" class="section">
+        <div class="section-header">
+          <h2>Customer Outstanding</h2>
+          <p>Receivables by salesman and area</p>
+        </div>
+
+        <div class="charts-grid">
+          <div class="chart-card">
+            <div class="chart-header">
+              <h3>Outstanding Trend</h3>
+            </div>
+            <div class="chart-body">
+              <canvas id="outstandingTrendChart"></canvas>
+            </div>
+          </div>
+
+          <div class="chart-card">
+            <div class="chart-header">
+              <h3>Distribution by Salesman</h3>
+            </div>
+            <div class="chart-body">
+              <canvas id="salesmanDistChart"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <div class="table-card full-width">
+          <div class="table-header">
+            <h3>Outstanding by Salesman</h3>
+          </div>
+          <div class="table-body scrollable">
+            <table class="data-table" id="outstanding-table">
+              <!-- Populated by JavaScript -->
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- Advances Section -->
+      <section id="advances-section" class="section">
+        <div class="section-header">
+          <h2>Staff Advances</h2>
+          <p>Track advances given and settlements</p>
+        </div>
+
+        <div class="kpi-grid small">
+          <div class="kpi-card kpi-info">
+            <div class="kpi-content">
+              <span class="kpi-label">Opening Balance</span>
+              <span class="kpi-value" id="adv-opening">--</span>
+            </div>
+          </div>
+          <div class="kpi-card kpi-success">
+            <div class="kpi-content">
+              <span class="kpi-label">Total Given</span>
+              <span class="kpi-value" id="adv-given">--</span>
+            </div>
+          </div>
+          <div class="kpi-card kpi-primary">
+            <div class="kpi-content">
+              <span class="kpi-label">Total Settled</span>
+              <span class="kpi-value" id="adv-settled">--</span>
+            </div>
+          </div>
+          <div class="kpi-card kpi-warning">
+            <div class="kpi-content">
+              <span class="kpi-label">Closing Balance</span>
+              <span class="kpi-value" id="adv-closing">--</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="chart-card full-width">
+          <div class="chart-header">
+            <h3>Advances Trend</h3>
+          </div>
+          <div class="chart-body">
+            <canvas id="advancesTrendChart"></canvas>
+          </div>
+        </div>
+      </section>
+
+      <!-- Suspense Section -->
+      <section id="suspense-section" class="section">
+        <div class="section-header">
+          <h2>Suspense Account</h2>
+          <p>Unidentified transactions tracking</p>
+        </div>
+
+        <div class="kpi-grid small">
+          <div class="kpi-card kpi-info">
+            <div class="kpi-content">
+              <span class="kpi-label">Opening Balance</span>
+              <span class="kpi-value" id="sus-opening">--</span>
+            </div>
+          </div>
+          <div class="kpi-card kpi-danger">
+            <div class="kpi-content">
+              <span class="kpi-label">Total Debits</span>
+              <span class="kpi-value" id="sus-debits">--</span>
+            </div>
+          </div>
+          <div class="kpi-card kpi-success">
+            <div class="kpi-content">
+              <span class="kpi-label">Total Credits</span>
+              <span class="kpi-value" id="sus-credits">--</span>
+            </div>
+          </div>
+          <div class="kpi-card kpi-warning">
+            <div class="kpi-content">
+              <span class="kpi-label">Closing Balance</span>
+              <span class="kpi-value" id="sus-closing">--</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="chart-card full-width">
+          <div class="chart-header">
+            <h3>Suspense Trend</h3>
+          </div>
+          <div class="chart-body">
+            <canvas id="suspenseTrendChart"></canvas>
+          </div>
+        </div>
+      </section>
+
+      <!-- Reports Section -->
+      <section id="reports-section" class="section">
+        <div class="section-header">
+          <h2>Reports & Export</h2>
+          <p>Generate and download reports</p>
+        </div>
+
+        <div class="reports-grid">
+          <div class="report-card" onclick="generateReport('monthly')">
+            <div class="report-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                <line x1="16" y1="2" x2="16" y2="6"/>
+                <line x1="8" y1="2" x2="8" y2="6"/>
+                <line x1="3" y1="10" x2="21" y2="10"/>
+              </svg>
+            </div>
+            <h4>Monthly Report</h4>
+            <p>Complete financial summary for selected month</p>
+          </div>
+
+          <div class="report-card" onclick="generateReport('comparison')">
+            <div class="report-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="18" y1="20" x2="18" y2="10"/>
+                <line x1="12" y1="20" x2="12" y2="4"/>
+                <line x1="6" y1="20" x2="6" y2="14"/>
+              </svg>
+            </div>
+            <h4>Comparison Report</h4>
+            <p>Month-over-month trend analysis</p>
+          </div>
+
+          <div class="report-card" onclick="generateReport('outstanding')">
+            <div class="report-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                <circle cx="9" cy="7" r="4"/>
+              </svg>
+            </div>
+            <h4>Outstanding Report</h4>
+            <p>Detailed customer receivables</p>
+          </div>
+
+          <div class="report-card" onclick="exportReport()">
+            <div class="report-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                <polyline points="14 2 14 8 20 8"/>
+              </svg>
+            </div>
+            <h4>Export to PDF</h4>
+            <p>Download complete report as PDF</p>
+          </div>
+
+          <div class="report-card" onclick="showToast('info', 'Coming Soon', 'Email functionality requires Google Sheets integration')">
+            <div class="report-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                <polyline points="22,6 12,13 2,6"/>
+              </svg>
+            </div>
+            <h4>Email Report</h4>
+            <p>Send report to email address</p>
+          </div>
+
+          <div class="report-card" onclick="showToast('info', 'Coming Soon', 'Connect to Google Sheets to add new months')">
+            <div class="report-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/>
+                <line x1="12" y1="8" x2="12" y2="16"/>
+                <line x1="8" y1="12" x2="16" y2="12"/>
+              </svg>
+            </div>
+            <h4>Add New Month</h4>
+            <p>Create sheets for a new month</p>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <!-- Loading Overlay -->
+  <div class="loading-overlay" id="loadingOverlay">
+    <div class="loading-spinner">
+      <div class="spinner"></div>
+      <p>Loading data...</p>
+    </div>
+  </div>
+
+  <!-- Toast Notifications -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- Settings Modal -->
+  <div class="modal-overlay" id="settingsModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>Settings</h3>
+        <button class="modal-close" onclick="closeSettings()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="setting-group">
+          <label>Google Apps Script Web App URL (Optional)</label>
+          <input type="url" id="apiUrl" placeholder="https://script.google.com/macros/s/...">
+          <small>Connect to live Google Sheets data</small>
+        </div>
+        <div class="setting-group">
+          <label>Currency</label>
+          <select id="currency">
+            <option value="SAR">SAR - Saudi Riyal</option>
+            <option value="USD">USD - US Dollar</option>
+            <option value="EUR">EUR - Euro</option>
+          </select>
+        </div>
+        <div class="setting-group">
+          <label>
+            <input type="checkbox" id="darkMode" onchange="toggleDarkMode()">
+            Dark Mode
+          </label>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeSettings()">Cancel</button>
+        <button class="btn btn-primary" onclick="saveSettings()">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="app.js"></script>
+</body>
+</html>
