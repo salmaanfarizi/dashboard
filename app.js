@@ -81,9 +81,9 @@ function toggleDarkMode() {
 function loadDashboardData() {
   showLoading(true);
 
-  // If API URL is configured, try to fetch live data
+  // If API URL is configured, try to fetch live data using JSONP
   if (settings.apiUrl) {
-    fetchFromAPI()
+    fetchWithJSONP(settings.apiUrl)
       .then(data => {
         if (data && !data.error) {
           dashboardData = data;
@@ -108,29 +108,56 @@ function loadDashboardData() {
   }
 }
 
-async function fetchFromAPI() {
-  // Build API URL with action parameter
-  let url = settings.apiUrl;
+/**
+ * Fetch data using JSONP (bypasses CORS restrictions)
+ */
+function fetchWithJSONP(apiUrl, timeout = 15000) {
+  return new Promise((resolve, reject) => {
+    // Generate unique callback name
+    const callbackName = 'jsonpCallback_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
 
-  // Remove trailing slash if present
-  if (url.endsWith('/')) {
-    url = url.slice(0, -1);
-  }
+    // Build URL with JSONP parameters
+    let url = apiUrl;
+    if (url.endsWith('/')) {
+      url = url.slice(0, -1);
+    }
+    const separator = url.includes('?') ? '&' : '?';
+    url += separator + 'action=getData&callback=' + callbackName;
 
-  // Add action parameter
-  const separator = url.includes('?') ? '&' : '?';
-  url += separator + 'action=getData';
+    // Create script element
+    const script = document.createElement('script');
+    script.src = url;
 
-  const response = await fetch(url, {
-    method: 'GET',
-    redirect: 'follow'
+    // Timeout handler
+    const timeoutId = setTimeout(() => {
+      cleanup();
+      reject(new Error('Request timed out'));
+    }, timeout);
+
+    // Cleanup function
+    function cleanup() {
+      clearTimeout(timeoutId);
+      delete window[callbackName];
+      if (script.parentNode) {
+        script.parentNode.removeChild(script);
+      }
+    }
+
+    // Define callback function
+    window[callbackName] = function(data) {
+      cleanup();
+      resolve(data);
+    };
+
+    // Error handler
+    script.onerror = function() {
+      cleanup();
+      reject(new Error('Failed to load script'));
+    };
+
+    // Add script to page (triggers the request)
+    document.head.appendChild(script);
   });
-
-  if (!response.ok) {
-    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-  }
-
-  return response.json();
 }
 
 function loadDemoData() {
