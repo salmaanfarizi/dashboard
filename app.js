@@ -5,6 +5,7 @@ let dashboardData = null;
 let charts = {};
 let currentMonth = null;
 let settings = {
+  apiUrl: '',
   currency: 'SAR',
   darkMode: false
 };
@@ -42,7 +43,8 @@ function loadSettings() {
   const saved = localStorage.getItem('dashboardSettings');
   if (saved) {
     settings = JSON.parse(saved);
-    document.getElementById('apiUrl').value = settings.apiUrl || '';
+    const apiUrlInput = document.getElementById('apiUrl');
+    if (apiUrlInput) apiUrlInput.value = settings.apiUrl || '';
     document.getElementById('currency').value = settings.currency || 'SAR';
     document.getElementById('darkMode').checked = settings.darkMode || false;
     if (settings.darkMode) {
@@ -52,7 +54,8 @@ function loadSettings() {
 }
 
 function saveSettings() {
-  settings.apiUrl = document.getElementById('apiUrl').value;
+  const apiUrlInput = document.getElementById('apiUrl');
+  if (apiUrlInput) settings.apiUrl = apiUrlInput.value.trim();
   settings.currency = document.getElementById('currency').value;
   settings.darkMode = document.getElementById('darkMode').checked;
   localStorage.setItem('dashboardSettings', JSON.stringify(settings));
@@ -78,12 +81,56 @@ function toggleDarkMode() {
 function loadDashboardData() {
   showLoading(true);
 
-  // Note: Direct API calls from Netlify to Google Apps Script are blocked by CORS.
-  // The dashboard uses embedded demo data (your actual spreadsheet data).
-  // For live data, use the Google Apps Script version within Google Sheets.
+  // If API URL is configured, try to fetch live data
+  if (settings.apiUrl) {
+    fetchFromAPI()
+      .then(data => {
+        if (data && !data.error) {
+          dashboardData = data;
+          currentMonth = data.latestMonth;
+          updateAllDisplays();
+          showLoading(false);
+          showToast('success', 'Live Data', 'Dashboard updated with live data from Google Sheets');
+        } else {
+          console.warn('API returned error:', data?.error);
+          loadDemoData();
+          showToast('warning', 'Using Demo Data', data?.error || 'Could not fetch live data');
+        }
+      })
+      .catch(error => {
+        console.error('API Error:', error);
+        loadDemoData();
+        showToast('warning', 'Using Demo Data', 'API unavailable - showing demo data');
+      });
+  } else {
+    // No API URL configured, use demo data
+    loadDemoData();
+  }
+}
 
-  // Always use demo data for Netlify deployment
-  loadDemoData();
+async function fetchFromAPI() {
+  // Build API URL with action parameter
+  let url = settings.apiUrl;
+
+  // Remove trailing slash if present
+  if (url.endsWith('/')) {
+    url = url.slice(0, -1);
+  }
+
+  // Add action parameter
+  const separator = url.includes('?') ? '&' : '?';
+  url += separator + 'action=getData';
+
+  const response = await fetch(url, {
+    method: 'GET',
+    redirect: 'follow'
+  });
+
+  if (!response.ok) {
+    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+  }
+
+  return response.json();
 }
 
 function loadDemoData() {

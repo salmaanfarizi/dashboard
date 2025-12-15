@@ -1417,9 +1417,41 @@ function fixOutstandingSummary() {
 /* ==================== WEB APP FUNCTIONS ==================== */
 
 /**
- * Serves the web dashboard
+ * Serves the web dashboard or JSON API
+ * URL Parameters:
+ *   - action=getData: Returns JSON dashboard data
+ *   - action=getMonth&month=MMM-YYYY: Returns JSON data for specific month
+ *   - (no action): Returns HTML dashboard
  */
 function doGet(e) {
+  const params = e ? e.parameter : {};
+  const action = params.action;
+
+  // JSON API endpoints
+  if (action === 'getData') {
+    try {
+      const data = getDashboardData();
+      return ContentService.createTextOutput(JSON.stringify(data))
+        .setMimeType(ContentService.MimeType.JSON);
+    } catch (error) {
+      return ContentService.createTextOutput(JSON.stringify({ error: error.message }))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+  }
+
+  if (action === 'getMonth') {
+    try {
+      const monthYear = params.month || '';
+      const data = getDashboardDataForMonth(monthYear);
+      return ContentService.createTextOutput(JSON.stringify(data))
+        .setMimeType(ContentService.MimeType.JSON);
+    } catch (error) {
+      return ContentService.createTextOutput(JSON.stringify({ error: error.message }))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+  }
+
+  // Default: serve HTML dashboard
   return HtmlService.createTemplateFromFile('Dashboard')
     .evaluate()
     .setTitle('Financial Dashboard')
