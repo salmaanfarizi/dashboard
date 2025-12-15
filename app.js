@@ -88,7 +88,8 @@ function loadDashboardData() {
         if (data && !data.error) {
           dashboardData = data;
           currentMonth = data.latestMonth;
-          updateAllDisplays();
+          populateMonthSelector(data.months);
+          updateDashboard(data);
           showLoading(false);
           showToast('success', 'Live Data', 'Dashboard updated with live data from Google Sheets');
         } else {
