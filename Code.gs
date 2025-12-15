@@ -1413,3 +1413,412 @@ function fixOutstandingSummary() {
 
   ui.alert(`Outstanding summary section fixed for ${monthYear}!`);
 }
+
+/* ==================== WEB APP FUNCTIONS ==================== */
+
+/**
+ * Serves the web dashboard
+ */
+function doGet(e) {
+  return HtmlService.createTemplateFromFile('Dashboard')
+    .evaluate()
+    .setTitle('Financial Dashboard')
+    .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL)
+    .addMetaTag('viewport', 'width=device-width, initial-scale=1');
+}
+
+/**
+ * Include HTML files (for CSS and JS)
+ */
+function include(filename) {
+  return HtmlService.createHtmlOutputFromFile(filename).getContent();
+}
+
+/**
+ * Opens the dashboard in a sidebar
+ */
+function openDashboardSidebar() {
+  const html = HtmlService.createTemplateFromFile('Dashboard')
+    .evaluate()
+    .setTitle('Financial Dashboard');
+  SpreadsheetApp.getUi().showSidebar(html);
+}
+
+/**
+ * Opens the dashboard in a modal dialog
+ */
+function openDashboardModal() {
+  const html = HtmlService.createTemplateFromFile('Dashboard')
+    .evaluate()
+    .setWidth(1200)
+    .setHeight(800);
+  SpreadsheetApp.getUi().showModalDialog(html, 'Financial Dashboard');
+}
+
+/**
+ * Get all dashboard data for the frontend
+ */
+function getDashboardData() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+
+  try {
+    const months = getMonthlySheets_(ss, 'Banks').map(m => m.monthYear);
+    const latestMonth = months.length ? months[months.length - 1] : null;
+
+    return {
+      latestMonth: latestMonth,
+      months: months,
+      kpi: getKPIData_(ss, latestMonth),
+      ytd: getYTDData_(ss),
+      banks: getBanksData_(ss),
+      outstanding: getOutstandingData_(ss),
+      advances: getAdvancesData_(ss),
+      suspense: getSuspenseData_(ss),
+      bankAccounts: getBankAccountsData_(ss, latestMonth)
+    };
+  } catch (error) {
+    console.error('Error getting dashboard data:', error);
+    throw error;
+  }
+}
+
+/**
+ * Get dashboard data for a specific month
+ */
+function getDashboardDataForMonth(monthYear) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+
+  try {
+    return {
+      latestMonth: monthYear,
+      months: getMonthlySheets_(ss, 'Banks').map(m => m.monthYear),
+      kpi: getKPIData_(ss, monthYear),
+      ytd: getYTDData_(ss),
+      banks: getBanksData_(ss),
+      outstanding: getOutstandingData_(ss),
+      advances: getAdvancesData_(ss),
+      suspense: getSuspenseData_(ss),
+      bankAccounts: getBankAccountsData_(ss, monthYear)
+    };
+  } catch (error) {
+    console.error('Error getting month data:', error);
+    throw error;
+  }
+}
+
+/**
+ * Get KPI data
+ */
+function getKPIData_(ss, monthYear) {
+  const banksComp = ss.getSheetByName('Banks_Comparison');
+  const outComp = ss.getSheetByName('Outstanding_Comparison');
+  const advComp = ss.getSheetByName('Advances_Comparison');
+  const susComp = ss.getSheetByName('Suspense_Comparison');
+
+  const months = getMonthlySheets_(ss, 'Banks');
+  const monthIdx = months.findIndex(m => m.monthYear === monthYear);
+  const col = monthIdx >= 0 ? monthIdx + 2 : months.length + 1;
+  const prevCol = col - 1;
+
+  // Get bank balance
+  let bankBalance = 0;
+  let bankPrev = 0;
+  if (banksComp && col > 1) {
+    bankBalance = banksComp.getRange(8, col).getValue() || 0;
+    if (prevCol > 1) bankPrev = banksComp.getRange(8, prevCol).getValue() || 0;
+  }
+
+  // Get outstanding total (find TOTAL row)
+  let outstanding = 0;
+  let outPrev = 0;
+  if (outComp) {
+    const outData = outComp.getRange('A:A').getValues();
+    for (let i = 0; i < outData.length; i++) {
+      if (String(outData[i][0]).toUpperCase() === 'TOTAL') {
+        outstanding = outComp.getRange(i + 1, col).getValue() || 0;
+        if (prevCol > 1) outPrev = outComp.getRange(i + 1, prevCol).getValue() || 0;
+        break;
+      }
+    }
+  }
+
+  // Get advances closing
+  let advances = 0;
+  let advPrev = 0;
+  if (advComp && col > 1) {
+    advances = advComp.getRange(7, col).getValue() || 0;
+    if (prevCol > 1) advPrev = advComp.getRange(7, prevCol).getValue() || 0;
+  }
+
+  // Get suspense closing
+  let suspense = 0;
+  let susPrev = 0;
+  if (susComp && col > 1) {
+    suspense = susComp.getRange(7, col).getValue() || 0;
+    if (prevCol > 1) susPrev = susComp.getRange(7, prevCol).getValue() || 0;
+  }
+
+  return {
+    bankBalance: bankBalance,
+    bankChange: bankPrev ? ((bankBalance - bankPrev) / Math.abs(bankPrev)) * 100 : 0,
+    outstanding: outstanding,
+    outstandingChange: outPrev ? ((outstanding - outPrev) / Math.abs(outPrev)) * 100 : 0,
+    advances: advances,
+    advancesChange: advPrev ? ((advances - advPrev) / Math.abs(advPrev)) * 100 : 0,
+    suspense: suspense,
+    suspenseChange: susPrev ? ((suspense - susPrev) / Math.abs(susPrev)) * 100 : 0
+  };
+}
+
+/**
+ * Get YTD summary data
+ */
+function getYTDData_(ss) {
+  const banksComp = ss.getSheetByName('Banks_Comparison');
+
+  let received = 0;
+  let payments = 0;
+  let monthCount = 0;
+
+  if (banksComp) {
+    const lastCol = banksComp.getLastColumn();
+    for (let col = 2; col <= lastCol; col++) {
+      const rec = banksComp.getRange(5, col).getValue();
+      const pay = banksComp.getRange(7, col).getValue();
+      if (rec || pay) {
+        received += Number(rec) || 0;
+        payments += Number(pay) || 0;
+        monthCount++;
+      }
+    }
+  }
+
+  return {
+    received: received,
+    payments: payments,
+    netFlow: received - payments,
+    months: monthCount
+  };
+}
+
+/**
+ * Get banks comparison data for charts
+ */
+function getBanksData_(ss) {
+  const banksComp = ss.getSheetByName('Banks_Comparison');
+  const labels = [];
+  const balance = [];
+  const received = [];
+  const payments = [];
+
+  if (banksComp) {
+    const lastCol = banksComp.getLastColumn();
+    for (let col = 2; col <= lastCol; col++) {
+      const month = banksComp.getRange(3, col).getValue();
+      if (month) {
+        labels.push(formatMonthLabel_(month));
+        balance.push(banksComp.getRange(8, col).getValue() || 0);
+        received.push(banksComp.getRange(5, col).getValue() || 0);
+        payments.push(banksComp.getRange(7, col).getValue() || 0);
+      }
+    }
+  }
+
+  return { labels, balance, received, payments };
+}
+
+/**
+ * Get outstanding comparison data for charts
+ */
+function getOutstandingData_(ss) {
+  const outComp = ss.getSheetByName('Outstanding_Comparison');
+  const labels = [];
+  const total = [];
+  const salesmen = [];
+
+  if (outComp) {
+    const lastCol = outComp.getLastColumn();
+    const lastRow = outComp.getLastRow();
+
+    // Get month labels
+    for (let col = 3; col <= lastCol; col++) {
+      const month = outComp.getRange(3, col).getValue();
+      if (month) labels.push(formatMonthLabel_(month));
+    }
+
+    // Get salesman data
+    let totalRow = -1;
+    for (let row = 4; row <= lastRow; row++) {
+      const name = outComp.getRange(row, 1).getValue();
+      if (!name) continue;
+
+      if (String(name).toUpperCase() === 'TOTAL') {
+        totalRow = row;
+        // Get total values
+        for (let col = 3; col <= lastCol; col++) {
+          const val = outComp.getRange(row, col).getValue();
+          if (val !== '') total.push(Number(val) || 0);
+        }
+      } else if (String(name).toUpperCase() !== 'MOM Δ (TOTAL)') {
+        // Get salesman's latest value and calculate trend
+        const lastVal = outComp.getRange(row, lastCol).getValue() || 0;
+        const prevVal = lastCol > 3 ? (outComp.getRange(row, lastCol - 1).getValue() || 0) : 0;
+        const trend = prevVal ? ((lastVal - prevVal) / Math.abs(prevVal)) * 100 : 0;
+
+        salesmen.push({
+          name: name,
+          value: lastVal,
+          trend: trend
+        });
+      }
+    }
+
+    // Sort by value descending
+    salesmen.sort((a, b) => b.value - a.value);
+  }
+
+  return { labels, total, salesmen };
+}
+
+/**
+ * Get advances comparison data for charts
+ */
+function getAdvancesData_(ss) {
+  const advComp = ss.getSheetByName('Advances_Comparison');
+  const labels = [];
+  const opening = [];
+  const given = [];
+  const settled = [];
+  const closing = [];
+
+  if (advComp) {
+    const lastCol = advComp.getLastColumn();
+    for (let col = 2; col <= lastCol; col++) {
+      const month = advComp.getRange(3, col).getValue();
+      if (month) {
+        labels.push(formatMonthLabel_(month));
+        opening.push(advComp.getRange(4, col).getValue() || 0);
+        given.push(advComp.getRange(5, col).getValue() || 0);
+        settled.push(advComp.getRange(6, col).getValue() || 0);
+        closing.push(advComp.getRange(7, col).getValue() || 0);
+      }
+    }
+  }
+
+  return { labels, opening, given, settled, closing };
+}
+
+/**
+ * Get suspense comparison data for charts
+ */
+function getSuspenseData_(ss) {
+  const susComp = ss.getSheetByName('Suspense_Comparison');
+  const labels = [];
+  const balance = [];
+
+  if (susComp) {
+    const lastCol = susComp.getLastColumn();
+    for (let col = 2; col <= lastCol; col++) {
+      const month = susComp.getRange(3, col).getValue();
+      if (month) {
+        labels.push(formatMonthLabel_(month));
+        balance.push(susComp.getRange(7, col).getValue() || 0);
+      }
+    }
+  }
+
+  return { labels, balance };
+}
+
+/**
+ * Get bank accounts data for the current month
+ */
+function getBankAccountsData_(ss, monthYear) {
+  const bankSheet = ss.getSheetByName(`Banks_${monthYear}`);
+  const accounts = [];
+
+  if (bankSheet) {
+    // SAR accounts (rows 4-7)
+    for (let row = 4; row <= 7; row++) {
+      const name = bankSheet.getRange(row, 1).getValue();
+      const balance = bankSheet.getRange(row, 6).getValue();
+      if (name) {
+        accounts.push({
+          name: name,
+          balance: balance || 0,
+          change: 0 // Would need previous month data to calculate
+        });
+      }
+    }
+
+    // USD accounts (row 13)
+    const usdName = bankSheet.getRange(13, 1).getValue();
+    const usdBalance = bankSheet.getRange(13, 6).getValue();
+    if (usdName) {
+      accounts.push({
+        name: usdName,
+        balance: usdBalance || 0,
+        change: 0
+      });
+    }
+  }
+
+  return accounts;
+}
+
+/**
+ * Format month label for charts
+ */
+function formatMonthLabel_(monthValue) {
+  if (monthValue instanceof Date) {
+    const months = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
+    return months[monthValue.getMonth()];
+  }
+  return String(monthValue).split('-')[0] || monthValue;
+}
+
+/**
+ * Send report via email (for web app)
+ */
+function sendReportEmail(email) {
+  try {
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const pdf = ss.getAs('application/pdf').setName('Monthly_Report.pdf');
+
+    MailApp.sendEmail({
+      to: email,
+      subject: 'Monthly Financial Report - ' + new Date().toLocaleDateString(),
+      body: 'Please find attached the monthly financial report.\n\nBest regards,\nAccount Department',
+      attachments: [pdf]
+    });
+
+    return true;
+  } catch (error) {
+    throw new Error('Failed to send email: ' + error.message);
+  }
+}
+
+/**
+ * Generate specific report type
+ */
+function generateReport(type, monthYear) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+
+  switch(type) {
+    case 'monthly':
+      // Navigate to the month's sheets
+      const bankSheet = ss.getSheetByName(`Banks_${monthYear}`);
+      if (bankSheet) ss.setActiveSheet(bankSheet);
+      break;
+    case 'comparison':
+      const compSheet = ss.getSheetByName('Banks_Comparison');
+      if (compSheet) ss.setActiveSheet(compSheet);
+      break;
+    case 'outstanding':
+      const outSheet = ss.getSheetByName('Outstanding_Comparison');
+      if (outSheet) ss.setActiveSheet(outSheet);
+      break;
+  }
+
+  return true;
+}
